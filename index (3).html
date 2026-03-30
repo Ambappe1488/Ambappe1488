@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .page {
+            display: none;
+        }
+
+        .page.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <hav>
+            <button data-group=".page" data-target="page-1">  стр 1 </button>
+            <button data-group=".page" data-target="page-2">  стр 2 </button>
+            <button data-group=".page" data-target="page-3">  стр 3 </button>
+            </hav>
+            </header>
+            <main>
+                <div class="page show" id="page-1">  Меня зовут Евгений учусь на специальности программиста второго курса </div>
+                <div class="page" id="page-2"> 
+                    <input> <button> ввести </button>
+                </div>
+                <div class="page" id="page-3">
+                    кпещштр
+                </div>
+            </main>
+<script>
+    document.querySelectorAll('button[data-group]').forEach(button =>{
+        button.onclick = event => {
+            document.querySelectorAll(button.dataset.group).forEach(function (element){
+                element.classList.toggle('show', element.id === event.currentTarget.dataset.target);
+            })
+        }
+    })
+</script>
