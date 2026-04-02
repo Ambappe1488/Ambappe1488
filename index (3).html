@@ -1,6 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>Mbappe</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -17,7 +20,7 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
-        hav {
+        nav {
             display: flex;
             justify-content: center;
             gap: 15px;
@@ -100,40 +103,128 @@
             color: #666;
             font-size: 18px;
         }
+
+        #api-result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4a76a8;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        #fetch-button {
+            padding: 12px 24px;
+            background-color: #4a76a8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        #fetch-button:hover {
+            background-color: #3a6592;
+        }
     </style>
 </head>
 <body>
     <header>
-        <hav>
-            <button data-group=".page" data-target="page-1"> О себе</button>
-            <button data-group=".page" data-target="page-2">чо нибуть</button>
-            <button data-group=".page" data-target="page-3">Мои работы</button>
-        </hav>
+        <nav>
+            <button data-group=".page" data-target="page-1">О себе</button>
+            <button data-group=".page" data-target="page-2">Что нибуть</button>
+            <button data-group=".page" data-target="page-3">Работы с API</button>
+        </nav>
     </header>
     <main>
         <div class="page show" id="page-1">
-            Меня зовут Евгений, на момент 2026 года, я учусь на специальности программиста второго курса, изучаю язык PHP, что поможет мне изучить другие языки из семейства C.
+            Меня зовут Евгений, на момент 2026 года я учусь на специальности программиста второго курса, изучаю язык PHP, что поможет мне изучить другие языки из семейства C.
         </div>
         <div class="page" id="page-2">
             <input type="text" placeholder="Введите текст пазязюста">
             <button>Ввести</button>
         </div>
         <div class="page" id="page-3">
-            а
+            <h2>Запрос к API</h2>
+            <p>Нажмите кнопку ниже, чтобы получить случайный цвет с сервера:</p>
+            <button id="fetch-button">Получить случайный цвет</button>
+            <div id="api-result">Данные не загружены</div>
         </div>
     </main>
     <script>
+
         document.querySelectorAll('button[data-group]').forEach(button => {
             button.onclick = event => {
-
                 document.querySelectorAll('.page').forEach(page => {
                     page.classList.remove('show');
                 });
-
                 const targetId = event.currentTarget.dataset.target;
                 document.getElementById(targetId).classList.add('show');
             };
         });
+
+
+        const fetchRandomColor = () => {
+            const resultDiv = document.getElementById('api-result');
+
+
+            if (!resultDiv) {
+                console.error('Элемент #api-result не найден в разметке');
+                return;
+            }
+
+            resultDiv.textContent = 'Загрузка...';
+
+            fetch('https://x-colors.yurace.pro/api/random')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let displayText = '<strong>Полученные данные:</strong><br>';
+
+
+                    if (data.color || data.name) {
+                        const colorName = data.color || data.name;
+                        displayText += `Цвет: <span style="color: ${colorName}; font-weight: bold;">${colorName}</span><br>`;
+            }
+
+            if (data.hex) {
+                displayText += `HEX: <code>${data.hex}</code><br>`;
+            }
+
+            if (Array.isArray(data.rgb)) {
+                displayText += `RGB: <code>rgb(${data.rgb.join(', ')})</code><br>`;
+            } else if (data.rgb) {
+                displayText += `RGB: <code>${data.rgb}</code><br>`;
+            }
+
+
+            if (displayText === '<strong>Полученные данные:</strong><br>') {
+                displayText = 'Получены данные, но их структура неизвестна:<br>' + JSON.stringify(data, null, 2);
+            }
+
+            resultDiv.innerHTML = displayText;
+        })
+        .catch(error => {
+            console.error('Ошибка при запросе:', error);
+            resultDiv.textContent = `Ошибка: ${error.message}`;
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const fetchButton = document.getElementById('fetch-button');
+
+        if (fetchButton) {
+            fetchButton.addEventListener('click', fetchRandomColor);
+        } else {
+            console.error('Кнопка #fetch-button не найдена в разметке');
+        }
+    });
     </script>
 </body>
 </html>
