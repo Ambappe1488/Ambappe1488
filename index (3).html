@@ -71,17 +71,23 @@
             font-size: 18px;
         }
 
-        #page-2 input {
+        .todo-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #todo-input {
             padding: 12px;
             width: 100%;
-            max-width: 300px;
+            max-width: 400px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
             box-sizing: border-box;
         }
 
-        #page-2 button {
+        #todo-add-btn {
             padding: 12px 24px;
             background-color: #4a76a8;
             color: white;
@@ -90,11 +96,43 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
-            align-self: flex-start;
         }
 
-        #page-2 button:hover {
+        #todo-add-btn:hover {
             background-color: #3a6592;
+        }
+
+        #todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #6c9bc0;
+            margin-bottom: 8px;
+            border-radius: 0 4px 4px 0;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .todo-delete-btn {
+            padding: 5px 10px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .todo-delete-btn:hover {
+            background-color: #e04040;
         }
 
         #page-3 {
@@ -142,10 +180,16 @@
         <div class="page show" id="page-1">
             Меня зовут Евгений, на момент 2026 года я учусь на специальности программиста второго курса, изучаю язык PHP, что поможет мне изучить другие языки из семейства C.
         </div>
+        
         <div class="page" id="page-2">
-            <input type="text" placeholder="Введите текст пазязюста">
-            <button>Ввести</button>
+            <h2>Мой список задач</h2>
+            <div class="todo-container">
+                <input type="text" id="todo-input" placeholder="Введите текст пазязюста">
+                <button id="todo-add-btn">Ввести</button>
+            </div>
+            <ul id="todo-list"></ul>
         </div>
+
         <div class="page" id="page-3">
             <h2>Запрос к API</h2>
             <p>Нажмите кнопку ниже, чтобы получить случайный цвет с сервера:</p>
@@ -154,7 +198,6 @@
         </div>
     </main>
     <script>
-
         document.querySelectorAll('button[data-group]').forEach(button => {
             button.onclick = event => {
                 document.querySelectorAll('.page').forEach(page => {
@@ -165,10 +208,44 @@
             };
         });
 
+        document.addEventListener('DOMContentLoaded', () => {
+            const todoInput = document.getElementById('todo-input');
+            const todoAddBtn = document.getElementById('todo-add-btn');
+            const todoList = document.getElementById('todo-list');
+
+            if (todoAddBtn && todoInput && todoList) {
+                const addTodo = () => {
+                    const text = todoInput.value.trim();
+                    if (!text) return;
+
+                    const li = document.createElement('li');
+                    li.className = 'todo-item';
+                    li.innerHTML = `
+                        <span>${text}</span>
+                        <button class="todo-delete-btn">Удалить</button>
+                    `;
+
+                    li.querySelector('.todo-delete-btn').addEventListener('click', () => {
+                        li.remove();
+                    });
+
+                    todoList.appendChild(li);
+                    todoInput.value = '';
+                    todoInput.focus();
+                };
+
+                todoAddBtn.addEventListener('click', addTodo);
+
+                todoInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        addTodo();
+                    }
+                });
+            }
+        });
 
         const fetchRandomColor = () => {
             const resultDiv = document.getElementById('api-result');
-
 
             if (!resultDiv) {
                 console.error('Элемент #api-result не найден в разметке');
@@ -177,7 +254,7 @@
 
             resultDiv.textContent = 'Загрузка...';
 
-            fetch('https://x-colors.yurace.pro/api/random')
+            fetch('yurace.pro')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -187,44 +264,42 @@
                 .then(data => {
                     let displayText = '<strong>Полученные данные:</strong><br>';
 
-
                     if (data.color || data.name) {
                         const colorName = data.color || data.name;
                         displayText += `Цвет: <span style="color: ${colorName}; font-weight: bold;">${colorName}</span><br>`;
+                    }
+
+                    if (data.hex) {
+                        displayText += `HEX: <code>${data.hex}</code><br>`;
+                    }
+
+                    if (Array.isArray(data.rgb)) {
+                        displayText += `RGB: <code>rgb(${data.rgb.join(', ')})</code><br>`;
+                    } else if (data.rgb) {
+                        displayText += `RGB: <code>${data.rgb}</code><br>`;
+                    }
+
+                    if (displayText === '<strong>Полученные данные:</strong><br>') {
+                        displayText = 'Получены данные, но их структура неизвестна:<br>' + JSON.stringify(data, null, 2);
+                    }
+
+                    resultDiv.innerHTML = displayText;
+                })
+                .catch(error => {
+                    console.error('Ошибка при запросе:', error);
+                    resultDiv.textContent = `Ошибка: ${error.message}`;
+                });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const fetchButton = document.getElementById('fetch-button');
+
+            if (fetchButton) {
+                fetchButton.addEventListener('click', fetchRandomColor);
+            } else {
+                console.error('Кнопка #fetch-button не найдена в разметке');
             }
-
-            if (data.hex) {
-                displayText += `HEX: <code>${data.hex}</code><br>`;
-            }
-
-            if (Array.isArray(data.rgb)) {
-                displayText += `RGB: <code>rgb(${data.rgb.join(', ')})</code><br>`;
-            } else if (data.rgb) {
-                displayText += `RGB: <code>${data.rgb}</code><br>`;
-            }
-
-
-            if (displayText === '<strong>Полученные данные:</strong><br>') {
-                displayText = 'Получены данные, но их структура неизвестна:<br>' + JSON.stringify(data, null, 2);
-            }
-
-            resultDiv.innerHTML = displayText;
-        })
-        .catch(error => {
-            console.error('Ошибка при запросе:', error);
-            resultDiv.textContent = `Ошибка: ${error.message}`;
         });
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const fetchButton = document.getElementById('fetch-button');
-
-        if (fetchButton) {
-            fetchButton.addEventListener('click', fetchRandomColor);
-        } else {
-            console.error('Кнопка #fetch-button не найдена в разметке');
-        }
-    });
     </script>
 </body>
-</html>
+</html>
